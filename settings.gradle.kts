@@ -21,5 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "obdtwo"
 include(":mobile")
-include(":automotive")
 include(":shared")

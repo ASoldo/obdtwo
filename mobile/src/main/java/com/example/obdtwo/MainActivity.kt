@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.ArrayAdapter
@@ -21,11 +20,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.media.session.MediaButtonReceiver
-import android.support.v4.media.session.MediaSessionCompat
-import androidx.core.app.NotificationCompat
-import android.app.NotificationManager
-import android.app.NotificationChannel
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,10 +29,6 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "OBD2Bluetooth"
     private lateinit var deviceListAdapter: ArrayAdapter<String>
     private val deviceList = mutableListOf<BluetoothDevice>()
-
-    private lateinit var mediaSession: MediaSessionCompat
-    private val CHANNEL_ID = "obd2_channel_id"
-    private val NOTIFICATION_ID = 1
 
     // Register the activity result launcher to enable Bluetooth
     private val enableBluetoothLauncher = registerForActivityResult(
@@ -85,9 +75,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Initialize MediaSession
-        initializeMediaSession()
-
         // Register Bluetooth discovery receiver
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(bluetoothDiscoveryReceiver, filter)
@@ -98,72 +85,6 @@ class MainActivity : AppCompatActivity() {
 
         // Prepare the list adapter to show discovered devices
         deviceListAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1)
-    }
-
-    private fun initializeMediaSession() {
-        // Initialize MediaSession
-        mediaSession = MediaSessionCompat(this, "OBD2MediaSession").apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
-            setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() {
-                    super.onPlay()
-                    Log.d(TAG, "Play button pressed")
-                    Toast.makeText(this@MainActivity, "Play button pressed", Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onPause() {
-                    super.onPause()
-                    Log.d(TAG, "Pause button pressed")
-                    Toast.makeText(this@MainActivity, "Pause button pressed", Toast.LENGTH_SHORT).show()
-                }
-            })
-        }
-
-        // Activate the session
-        mediaSession.isActive = true
-
-        // Create the media control notification
-        createMediaNotification()
-    }
-
-    private fun createMediaNotification() {
-        // Create notification channel for Android O and above
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "OBD2 Notification",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Notification Channel for OBD2 App"
-            }
-
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val playIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(
-            this, android.support.v4.media.session.PlaybackStateCompat.ACTION_PLAY
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("OBD2 Connected")
-            .setContentText("Tap to control your OBD2 device")
-            .setSmallIcon(android.R.drawable.ic_media_play) // Placeholder drawable
-            .addAction(
-                NotificationCompat.Action(
-                    android.R.drawable.ic_media_play, "Play", playIntent
-                )
-            )
-            .setStyle(
-                androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.sessionToken)
-                    .setShowActionsInCompactView(0)
-            )
-            .build()
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun hasBluetoothPermissions(): Boolean {
@@ -255,7 +176,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     // Show a dialog with the list of discovered devices
     private fun showDeviceSelectionDialog() {
         val builder = AlertDialog.Builder(this)
@@ -316,11 +236,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(bluetoothDiscoveryReceiver)
         unregisterReceiver(bluetoothBondReceiver)
-        mediaSession.release()
     }
 }
