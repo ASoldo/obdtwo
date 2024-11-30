@@ -12,11 +12,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import android.provider.Settings
+import android.content.Intent
+import android.net.Uri
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bluetoothHelper: BluetoothHelper
     private lateinit var deviceListAdapter: ArrayAdapter<String>
+    companion object {
+        private const val REQUEST_OVERLAY_PERMISSION = 100
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +61,28 @@ class MainActivity : AppCompatActivity() {
         // Register bonding state change receiver
         val bondFilter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         registerReceiver(bluetoothHelper.bluetoothBondReceiver, bondFilter)
+
+        val startBubbleButton: Button = findViewById(R.id.start_bubble_button)
+        val stopBubbleButton: Button = findViewById(R.id.stop_bubble_button)
+
+        startBubbleButton.setOnClickListener {
+            if (Settings.canDrawOverlays(this)) {
+                val intent = Intent(this, FloatingBubbleService::class.java)
+                startService(intent)
+            } else {
+                // Request permission to draw overlays
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION)
+            }
+        }
+
+        stopBubbleButton.setOnClickListener {
+            val intent = Intent(this, FloatingBubbleService::class.java)
+            stopService(intent)
+        }
     }
 
     // Register for permission results
