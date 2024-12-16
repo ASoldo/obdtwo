@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.ArrayAdapter
@@ -27,6 +26,7 @@ class BluetoothHelper(private val context: Context) {
     private lateinit var deviceListAdapter: ArrayAdapter<String>
     private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private var pendingDeviceToConnect: BluetoothDevice? = null
+    private var socket: BluetoothSocket? = null  // Store the connected socket
 
     fun setDeviceListAdapter(adapter: ArrayAdapter<String>) {
         deviceListAdapter = adapter
@@ -77,7 +77,8 @@ class BluetoothHelper(private val context: Context) {
 
     val bluetoothDiscoveryReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
-            if (intent.action == BluetoothDevice.ACTION_FOUND) {
+            val action = intent.action
+            if (action == BluetoothDevice.ACTION_FOUND) {
                 val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
 
                 device?.let {
@@ -177,18 +178,22 @@ class BluetoothHelper(private val context: Context) {
 
         try {
             bluetoothAdapter?.cancelDiscovery()
-            val socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
-            socket.connect()
+            socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+            socket?.connect()
             Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
 
-            // Initialize OBD-II adapter
-            sendCommand(socket, "AT RV")
-            val voltageResponse = readResponse(socket)
+            // Optionally init ELM327 (uncomment if needed)
+            // sendCommand("AT Z")
+            // sendCommand("AT E0")
+            // sendCommand("AT L0")
+            // sendCommand("AT SP 0")
 
+            // Just fetch voltage once as a test
+            sendCommand("AT RV")
+            val voltageResponse = readResponse()
             val voltage = parseVoltage(voltageResponse)
             Log.d(TAG, "Voltage: $voltage")
 
-            // Update the EditText with the voltage on the UI thread
             if (context is Activity) {
                 (context as Activity).runOnUiThread {
                     val elmNameEditText = (context as Activity).findViewById<EditText>(R.id.elm_name)
@@ -202,9 +207,19 @@ class BluetoothHelper(private val context: Context) {
         }
     }
 
-    private fun sendCommand(socket: BluetoothSocket, command: String) {
+    fun isConnected(): Boolean {
+        return socket?.isConnected == true
+    }
+
+    fun sendObdCommand(cmd: String): String {
+        if (!isConnected()) return ""
+        sendCommand(cmd)
+        return readFullResponse() // Reads until '>'
+    }
+
+    private fun sendCommand(command: String) {
         try {
-            val out = socket.outputStream
+            val out = socket?.outputStream ?: return
             out.write((command + "\r").toByteArray(Charsets.UTF_8))
             out.flush()
             Log.d(TAG, "Sent command: $command")
@@ -213,9 +228,9 @@ class BluetoothHelper(private val context: Context) {
         }
     }
 
-    private fun readResponse(socket: BluetoothSocket): String {
+    private fun readResponse(): String {
         return try {
-            val inputStream = socket.inputStream
+            val inputStream = socket?.inputStream ?: return ""
             val buffer = ByteArray(1024)
             val bytesRead = inputStream.read(buffer)
             val response = String(buffer, 0, bytesRead)
@@ -227,13 +242,28 @@ class BluetoothHelper(private val context: Context) {
         }
     }
 
-    /**
-     * For ATRV, the response is typically something like "12.3V".
-     * Just return the response as is, or clean it up if needed.
-     */
+    private fun readFullResponse(): String {
+        // Reads until '>' prompt
+        return try {
+            val input = socket?.inputStream ?: return ""
+            val sb = StringBuilder()
+            while (true) {
+                val c = input.read()
+                if (c == -1) break
+                val char = c.toChar()
+                sb.append(char)
+                if (char == '>') break
+            }
+            val resp = sb.toString().replace("\r", "").replace("\n", "").replace(">", "").trim()
+            Log.d(TAG, "Full response: $resp")
+            resp
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading full response: ${e.message}", e)
+            ""
+        }
+    }
+
     private fun parseVoltage(response: String): String {
-        // The response from "ATRV" is typically just the voltage reading like "12.3V"
-        // If there are extra characters or prompt symbols (like '>'), trim them out.
         val cleaned = response.replace("\r", "").replace("\n", "").replace(">", "").trim()
         return if (cleaned.isEmpty()) "No Voltage Data" else cleaned
     }

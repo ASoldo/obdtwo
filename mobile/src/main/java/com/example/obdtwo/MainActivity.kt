@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -15,20 +17,31 @@ import androidx.core.view.WindowInsetsCompat
 import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
-
+import java.util.Timer
+import java.util.TimerTask
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bluetoothHelper: BluetoothHelper
     private lateinit var deviceListAdapter: ArrayAdapter<String>
+
+    private lateinit var rpmProgressBar: ProgressBar
+    private lateinit var kmhNumber: EditText
+    private lateinit var startButton: Button
+
+    private var pollingTimer: Timer? = null
+
     companion object {
         private const val REQUEST_OVERLAY_PERMISSION = 100
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        rpmProgressBar = findViewById(R.id.rpm_progress_bar)
+        kmhNumber = findViewById(R.id.kmh_number)
+        startButton = findViewById(R.id.start_button)
 
         // Initialize BluetoothHelper
         bluetoothHelper = BluetoothHelper(this)
@@ -83,6 +96,15 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, FloatingBubbleService::class.java)
             stopService(intent)
         }
+
+        // Start polling RPM and Speed when Start button is clicked
+        startButton.setOnClickListener {
+            if (!bluetoothHelper.isConnected()) {
+                Toast.makeText(this, "Not connected to OBD-II adapter.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            startPollingData()
+        }
     }
 
     // Register for permission results
@@ -109,9 +131,51 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun startPollingData() {
+        pollingTimer?.cancel()
+        pollingTimer = Timer()
+        pollingTimer?.schedule(object : TimerTask() {
+            override fun run() {
+                val rpmResponse = bluetoothHelper.sendObdCommand("010C")
+                val rpm = parseRPM(rpmResponse)
+
+                val speedResponse = bluetoothHelper.sendObdCommand("010D")
+                val speed = parseSpeed(speedResponse)
+
+                runOnUiThread {
+                    rpm?.let {
+                        rpmProgressBar.progress = it.coerceAtMost(rpmProgressBar.max)
+                    }
+                    speed?.let {
+                        kmhNumber.setText(it.toString())
+                    }
+                }
+            }
+        }, 0, 1000) // every 1 second
+    }
+
+    private fun parseRPM(response: String): Int? {
+        // "41 0C A B"
+        val parts = response.trim().split(" ")
+        return if (parts.size >= 4 && parts[0] == "41" && parts[1] == "0C") {
+            val A = parts[2].toIntOrNull(16) ?: return null
+            val B = parts[3].toIntOrNull(16) ?: return null
+            ((A * 256) + B) / 4
+        } else null
+    }
+
+    private fun parseSpeed(response: String): Int? {
+        // "41 0D A"
+        val parts = response.trim().split(" ")
+        return if (parts.size >= 3 && parts[0] == "41" && parts[1] == "0D") {
+            parts[2].toIntOrNull(16)
+        } else null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(bluetoothHelper.bluetoothDiscoveryReceiver)
         unregisterReceiver(bluetoothHelper.bluetoothBondReceiver)
+        pollingTimer?.cancel()
     }
 }
