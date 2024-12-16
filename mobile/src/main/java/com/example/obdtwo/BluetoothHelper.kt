@@ -1,8 +1,10 @@
 package com.example.obdtwo
 
 import android.Manifest
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,19 +12,21 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import java.util.UUID
 
 class BluetoothHelper(private val context: Context) {
 
-    private val bluetoothAdapter: BluetoothAdapter? by lazy {
-        BluetoothAdapter.getDefaultAdapter()
-    }
+    private val bluetoothAdapter: BluetoothAdapter? by lazy { BluetoothAdapter.getDefaultAdapter() }
     private val TAG = "OBD2Bluetooth"
     private val deviceList = mutableListOf<BluetoothDevice>()
     private lateinit var deviceListAdapter: ArrayAdapter<String>
+    private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    private var pendingDeviceToConnect: BluetoothDevice? = null
 
     fun setDeviceListAdapter(adapter: ArrayAdapter<String>) {
         deviceListAdapter = adapter
@@ -71,29 +75,24 @@ class BluetoothHelper(private val context: Context) {
         deviceListAdapter.clear()
     }
 
-    // Bluetooth discovery receiver
     val bluetoothDiscoveryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(ctx: Context, intent: Intent) {
             if (intent.action == BluetoothDevice.ACTION_FOUND) {
                 val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
 
                 device?.let {
-                    if (ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.BLUETOOTH_CONNECT
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
+                    if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT)
+                        == PackageManager.PERMISSION_GRANTED) {
                         try {
                             val deviceName = it.name ?: "Unknown Device"
                             val deviceAddress = it.address
                             Log.d(TAG, "Device found: $deviceName, $deviceAddress")
 
-                            // Add the discovered device to the list
                             deviceList.add(it)
                             deviceListAdapter.add("$deviceName ($deviceAddress)")
                             deviceListAdapter.notifyDataSetChanged()
 
-                            // Show the device selection dialog if new devices are found
+                            // Show the device selection dialog
                             showDeviceSelectionDialog()
                         } catch (e: SecurityException) {
                             Log.e(TAG, "Permission denied to access device properties: ${e.message}")
@@ -106,22 +105,23 @@ class BluetoothHelper(private val context: Context) {
         }
     }
 
-    // Bluetooth bond state receiver
     val bluetoothBondReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(ctx: Context, intent: Intent) {
             val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             val bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
 
             device?.let {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
+                if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT)
+                    == PackageManager.PERMISSION_GRANTED) {
                     try {
                         when (bondState) {
                             BluetoothDevice.BOND_BONDING -> Log.d(TAG, "Pairing with ${it.name} in progress...")
-                            BluetoothDevice.BOND_BONDED -> Log.d(TAG, "Successfully paired with ${it.name}")
+                            BluetoothDevice.BOND_BONDED -> {
+                                Log.d(TAG, "Successfully paired with ${it.name}")
+                                if (it == pendingDeviceToConnect) {
+                                    connectToDevice(it)
+                                } else {}
+                            }
                             BluetoothDevice.BOND_NONE -> Log.d(TAG, "Pairing with ${it.name} failed or canceled.")
                             else -> Log.d(TAG, "Unknown bonding state.")
                         }
@@ -135,7 +135,6 @@ class BluetoothHelper(private val context: Context) {
         }
     }
 
-    // Show a dialog with the list of discovered devices
     private fun showDeviceSelectionDialog() {
         val builder = AlertDialog.Builder(context)
         builder.setTitle("Select a device to pair")
@@ -145,24 +144,97 @@ class BluetoothHelper(private val context: Context) {
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_CONNECT
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+                ) == PackageManager.PERMISSION_GRANTED) {
                 val deviceName = device.name ?: "Unknown Device"
                 val deviceAddress = device.address
                 Log.d(TAG, "Selected device: $deviceName, $deviceAddress")
 
                 Toast.makeText(context, "Selected device: $deviceName", Toast.LENGTH_SHORT).show()
 
-                if (device.bondState != BluetoothDevice.BOND_BONDED) {
+                pendingDeviceToConnect = device
+                if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                    connectToDevice(device)
+                } else {
                     Log.d(TAG, "Attempting to pair with $deviceName")
                     device.createBond()
-                } else {
-                    Log.d(TAG, "Device is already paired.")
-                    Toast.makeText(context, "Device is already paired.", Toast.LENGTH_SHORT).show()
                 }
+            } else {
+                Toast.makeText(context, "No BLUETOOTH_CONNECT permission", Toast.LENGTH_SHORT).show()
             }
         }
         builder.setNegativeButton("Cancel", null)
         builder.show()
+    }
+
+    private fun connectToDevice(device: BluetoothDevice) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "No BLUETOOTH_CONNECT permission", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            bluetoothAdapter?.cancelDiscovery()
+            val socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+            socket.connect()
+            Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
+
+            // Initialize OBD-II adapter
+            sendCommand(socket, "AT RV")
+            val voltageResponse = readResponse(socket)
+
+            val voltage = parseVoltage(voltageResponse)
+            Log.d(TAG, "Voltage: $voltage")
+
+            // Update the EditText with the voltage on the UI thread
+            if (context is Activity) {
+                (context as Activity).runOnUiThread {
+                    val elmNameEditText = (context as Activity).findViewById<EditText>(R.id.elm_name)
+                    elmNameEditText.setText(voltage)
+                }
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Failed to connect: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun sendCommand(socket: BluetoothSocket, command: String) {
+        try {
+            val out = socket.outputStream
+            out.write((command + "\r").toByteArray(Charsets.UTF_8))
+            out.flush()
+            Log.d(TAG, "Sent command: $command")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending command: ${e.message}", e)
+        }
+    }
+
+    private fun readResponse(socket: BluetoothSocket): String {
+        return try {
+            val inputStream = socket.inputStream
+            val buffer = ByteArray(1024)
+            val bytesRead = inputStream.read(buffer)
+            val response = String(buffer, 0, bytesRead)
+            Log.d(TAG, "Received: $response")
+            response.trim()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading response: ${e.message}", e)
+            ""
+        }
+    }
+
+    /**
+     * For ATRV, the response is typically something like "12.3V".
+     * Just return the response as is, or clean it up if needed.
+     */
+    private fun parseVoltage(response: String): String {
+        // The response from "ATRV" is typically just the voltage reading like "12.3V"
+        // If there are extra characters or prompt symbols (like '>'), trim them out.
+        val cleaned = response.replace("\r", "").replace("\n", "").replace(">", "").trim()
+        return if (cleaned.isEmpty()) "No Voltage Data" else cleaned
     }
 }

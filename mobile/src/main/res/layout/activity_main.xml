@@ -37,16 +37,14 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="18dp"
-        android:layout_marginBottom="32dp"
         android:text="Stop Bubble"
-        app:layout_constraintBottom_toTopOf="@+id/progressBar3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/start_bubble_button" />
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/rpm_progress_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="200dp"
         android:layout_height="32dp"
@@ -59,21 +57,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ProgressBar
-        android:id="@+id/progressBar3"
-        style="@style/Widget.AppCompat.ProgressBar"
+    <EditText
+        android:id="@+id/elm_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="2dp"
-        android:indeterminate="true"
-        android:max="180"
-        android:min="0"
-        android:progress="90"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="110dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="92dp"
+        android:layout_marginBottom="181dp"
+        android:ems="10"
+        android:inputType="text"
+        android:text="Name"
+        app:layout_constraintBottom_toTopOf="@+id/scan_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.213" />
+        app:layout_constraintTop_toBottomOf="@+id/rpm_progress_bar" />
+
+    <EditText
+        android:id="@+id/kmh_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="107dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="95dp"
+        android:layout_marginBottom="19dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="0"
+        app:layout_constraintBottom_toTopOf="@+id/elm_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rpm_progress_bar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
