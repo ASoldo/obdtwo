@@ -38,44 +38,47 @@
     <ProgressBar
         android:id="@+id/rpm_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="102dp"
-        android:layout_height="339dp"
+        android:layout_width="381dp"
+        android:layout_height="551dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="5dp"
         android:indeterminate="false"
         android:max="60"
-        android:progress="10"
+        android:progress="30"
+        android:progressDrawable="@drawable/custom_progress_bar"
         android:progressTint="#FF0000"
-        android:rotation="270"
-        android:scaleY="10"
         android:scrollbarStyle="insideOverlay"
+        app:layout_constraintBottom_toTopOf="@+id/scan_button"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="56dp" />
+        app:layout_constraintTop_toBottomOf="@+id/start_bubble_button" />
+
+    <!-- New Disconnect button -->
 
     <EditText
         android:id="@+id/elm_name"
         android:layout_width="151dp"
         android:layout_height="49dp"
-        android:layout_marginTop="7dp"
         android:ems="10"
         android:inputType="text"
         android:text="Name"
+        app:layout_constraintBottom_toTopOf="@+id/kmh_number"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.519"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- New Disconnect button -->
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/kmh_number"
         android:layout_width="187dp"
         android:layout_height="47dp"
-        android:layout_marginBottom="58dp"
+        android:layout_marginBottom="16dp"
         android:ems="10"
         android:inputType="number"
         android:text="0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.562"
+        app:layout_constraintHorizontal_bias="0.566"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
