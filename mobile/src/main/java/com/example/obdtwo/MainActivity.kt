@@ -165,15 +165,22 @@ class MainActivity : AppCompatActivity() {
                 val speed = parseSpeed(speedResponse)
 
                 runOnUiThread {
-                    // Update progress bars based on RPM
+                    // Update main bars here as before
                     updateProgressBars(rpm)
+
                     speed?.let {
                         kmhNumber.setText(it.toString())
                     }
+
+                    // Send broadcast to update bubble service
+                    val intent = Intent("com.example.obdtwo.UPDATE_RPM")
+                    intent.putExtra("rpm", rpm ?: 0)
+                    sendBroadcast(intent)
                 }
             }
-        }, 0, 1000) // every 1 second
+        }, 0, 250) // every 1 second
     }
+
 
     private fun updateProgressBars(rpmValue: Int?) {
         if (rpmValue == null) {
@@ -187,11 +194,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         val rpm = rpmValue.coerceIn(0, 60)
-
-        // According to the logic:
-        // 0–30: green_left fills from 0 to 30
-        // 30–50: green_left full (30), orange_left = rpm - 30, red_middle = 0, others = 0
-        // 50–60: green_left full (30), orange_left full (20), red_middle = rpm - 50, others = 0
 
         when {
             rpm <= 30 -> {
@@ -212,7 +214,6 @@ class MainActivity : AppCompatActivity() {
                 green_left_progress_bar.progress = 30
                 orange_left_progress_bar.progress = 20
                 red_middle_progress_bar.progress = rpm - 50
-                // Keeping orange_right and green_right at 0 for now
                 orange_right_progress_bar.progress = 20
                 green_right_progress_bar.progress = 30
             }
