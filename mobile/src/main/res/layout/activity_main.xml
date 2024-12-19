@@ -9,15 +9,6 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/scan_button"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_marginBottom="28dp"
-        android:text="Scan"
-        app:layout_constraintBottom_toTopOf="@+id/disconnect_button"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
         android:id="@+id/start_bubble_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,52 +24,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- New Stop button -->
-
-    <ProgressBar
-        android:id="@+id/rpm_progress_bar"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="381dp"
-        android:layout_height="551dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="5dp"
-        android:layout_marginBottom="5dp"
-        android:indeterminate="false"
-        android:max="60"
-        android:progress="30"
-        android:progressDrawable="@drawable/custom_progress_bar"
-        android:progressTint="#FF0000"
-        android:scrollbarStyle="insideOverlay"
-        app:layout_constraintBottom_toTopOf="@+id/scan_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/start_bubble_button" />
-
-    <!-- New Disconnect button -->
-
-    <EditText
-        android:id="@+id/elm_name"
-        android:layout_width="151dp"
-        android:layout_height="49dp"
-        android:ems="10"
-        android:inputType="text"
-        android:text="Name"
-        app:layout_constraintBottom_toTopOf="@+id/kmh_number"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.519"
+    <Button
+        android:id="@+id/scan_button"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginBottom="28dp"
+        android:text="Scan"
+        app:layout_constraintBottom_toTopOf="@+id/disconnect_button"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <EditText
-        android:id="@+id/kmh_number"
-        android:layout_width="187dp"
-        android:layout_height="47dp"
-        android:layout_marginBottom="16dp"
-        android:ems="10"
-        android:inputType="number"
-        android:text="0"
+    <Button
+        android:id="@+id/disconnect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disconnect"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.566"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
@@ -98,12 +58,105 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/disconnect_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Disconnect"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <EditText
+        android:id="@+id/elm_name"
+        android:layout_width="151dp"
+        android:layout_height="49dp"
+        android:ems="10"
+        android:inputType="text"
+        android:text="Name"
+        app:layout_constraintBottom_toTopOf="@+id/kmh_number"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.519"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/kmh_number"
+        android:layout_width="187dp"
+        android:layout_height="47dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="0"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.566"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- 5 Progress Bars in a horizontal chain -->
+    <!-- Adjust their layout_width to 0dp so they share available space -->
+    <!-- All use the same vertical constraints and different horizontal chaining -->
+
+    <ProgressBar
+        android:id="@+id/green_left_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:indeterminate="false"
+        android:max="30"
+        android:progress="15"
+        android:progressDrawable="@drawable/custom_progress_bar"
+        app:layout_constraintBottom_toTopOf="@+id/scan_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/start_bubble_button" />
+
+    <ProgressBar
+        android:id="@+id/orange_left_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="48dp"
+        android:indeterminate="false"
+        android:max="20"
+        android:progress="10"
+        android:progressDrawable="@drawable/custom_progress_bar"
+        android:progressTint="#FF9800"
+        app:layout_constraintBottom_toTopOf="@id/scan_button"
+        app:layout_constraintStart_toEndOf="@+id/green_left_progress_bar"
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <ProgressBar
+        android:id="@+id/red_middle_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:indeterminate="false"
+        android:max="10"
+        android:progress="5"
+        android:progressDrawable="@drawable/custom_progress_bar"
+        android:progressTint="#E91E1E"
+        app:layout_constraintBottom_toTopOf="@id/scan_button"
+        app:layout_constraintEnd_toStartOf="@+id/orange_right_progress_bar"
+        app:layout_constraintStart_toEndOf="@+id/orange_left_progress_bar"
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
+
+    <ProgressBar
+        android:id="@+id/orange_right_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:indeterminate="false"
+        android:max="20"
+        android:progress="10"
+        android:progressDrawable="@drawable/custom_progress_bar"
+        android:progressTint="#FF9800"
+        app:layout_constraintBottom_toTopOf="@id/scan_button"
+        app:layout_constraintEnd_toStartOf="@+id/green_right_progress_bar"
+        app:layout_constraintStart_toEndOf="@+id/red_middle_progress_bar"
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
+
+    <ProgressBar
+        android:id="@+id/green_right_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:indeterminate="false"
+        android:max="30"
+        android:progress="15"
+        android:progressDrawable="@drawable/custom_progress_bar"
+        app:layout_constraintBottom_toTopOf="@id/scan_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

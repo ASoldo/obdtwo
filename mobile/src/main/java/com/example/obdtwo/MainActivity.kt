@@ -5,11 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -25,7 +21,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bluetoothHelper: BluetoothHelper
     private lateinit var deviceListAdapter: ArrayAdapter<String>
 
-    private lateinit var rpmProgressBar: ProgressBar
+    // Progress bars
+    private lateinit var green_left_progress_bar: ProgressBar
+    private lateinit var orange_left_progress_bar: ProgressBar
+    private lateinit var red_middle_progress_bar: ProgressBar
+    private lateinit var orange_right_progress_bar: ProgressBar
+    private lateinit var green_right_progress_bar: ProgressBar
+
     private lateinit var kmhNumber: EditText
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
@@ -41,7 +43,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        rpmProgressBar = findViewById(R.id.rpm_progress_bar)
+        // Find the progress bars
+        green_left_progress_bar = findViewById(R.id.green_left_progress_bar)
+        orange_left_progress_bar = findViewById(R.id.orange_left_progress_bar)
+        red_middle_progress_bar = findViewById(R.id.red_middle_progress_bar)
+        orange_right_progress_bar = findViewById(R.id.orange_right_progress_bar)
+        green_right_progress_bar = findViewById(R.id.green_right_progress_bar)
+
         kmhNumber = findViewById(R.id.kmh_number)
         startButton = findViewById(R.id.start_button)
         stopButton = findViewById(R.id.stop_button)
@@ -50,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         // Initialize BluetoothHelper
         bluetoothHelper = BluetoothHelper(this)
 
-        // Handling window insets
+        // Handle window insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -70,11 +78,10 @@ class MainActivity : AppCompatActivity() {
         deviceListAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1)
         bluetoothHelper.setDeviceListAdapter(deviceListAdapter)
 
-        // Register Bluetooth discovery receiver
+        // Register Bluetooth receivers
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(bluetoothHelper.bluetoothDiscoveryReceiver, filter)
 
-        // Register bonding state change receiver
         val bondFilter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         registerReceiver(bluetoothHelper.bluetoothBondReceiver, bondFilter)
 
@@ -158,15 +165,58 @@ class MainActivity : AppCompatActivity() {
                 val speed = parseSpeed(speedResponse)
 
                 runOnUiThread {
-                    rpm?.let {
-                        rpmProgressBar.progress = it.coerceAtMost(rpmProgressBar.max)
-                    }
+                    // Update progress bars based on RPM
+                    updateProgressBars(rpm)
                     speed?.let {
                         kmhNumber.setText(it.toString())
                     }
                 }
             }
         }, 0, 1000) // every 1 second
+    }
+
+    private fun updateProgressBars(rpmValue: Int?) {
+        if (rpmValue == null) {
+            // If RPM is null, set all to zero
+            green_left_progress_bar.progress = 0
+            orange_left_progress_bar.progress = 0
+            red_middle_progress_bar.progress = 0
+            orange_right_progress_bar.progress = 0
+            green_right_progress_bar.progress = 0
+            return
+        }
+
+        val rpm = rpmValue.coerceIn(0, 60)
+
+        // According to the logic:
+        // 0–30: green_left fills from 0 to 30
+        // 30–50: green_left full (30), orange_left = rpm - 30, red_middle = 0, others = 0
+        // 50–60: green_left full (30), orange_left full (20), red_middle = rpm - 50, others = 0
+
+        when {
+            rpm <= 30 -> {
+                green_left_progress_bar.progress = rpm
+                orange_left_progress_bar.progress = 0
+                red_middle_progress_bar.progress = 0
+                orange_right_progress_bar.progress = 0
+                green_right_progress_bar.progress = rpm
+            }
+            rpm in 31..50 -> {
+                green_left_progress_bar.progress = 30
+                orange_left_progress_bar.progress = rpm - 30
+                red_middle_progress_bar.progress = 0
+                orange_right_progress_bar.progress = rpm - 30
+                green_right_progress_bar.progress = 30
+            }
+            rpm in 51..60 -> {
+                green_left_progress_bar.progress = 30
+                orange_left_progress_bar.progress = 20
+                red_middle_progress_bar.progress = rpm - 50
+                // Keeping orange_right and green_right at 0 for now
+                orange_right_progress_bar.progress = 20
+                green_right_progress_bar.progress = 30
+            }
+        }
     }
 
     private fun parseRPM(response: String): Int? {
