@@ -28,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rpmProgressBar: ProgressBar
     private lateinit var kmhNumber: EditText
     private lateinit var startButton: Button
+    private lateinit var stopButton: Button
+    private lateinit var disconnectButton: Button
 
     private var pollingTimer: Timer? = null
 
@@ -42,6 +44,8 @@ class MainActivity : AppCompatActivity() {
         rpmProgressBar = findViewById(R.id.rpm_progress_bar)
         kmhNumber = findViewById(R.id.kmh_number)
         startButton = findViewById(R.id.start_button)
+        stopButton = findViewById(R.id.stop_button)
+        disconnectButton = findViewById(R.id.disconnect_button)
 
         // Initialize BluetoothHelper
         bluetoothHelper = BluetoothHelper(this)
@@ -53,7 +57,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Find the scan button and set the click listener
         val scanButton: Button = findViewById(R.id.scan_button)
         scanButton.setOnClickListener {
             if (bluetoothHelper.hasLocationPermissions() && bluetoothHelper.hasBluetoothPermissions()) {
@@ -83,7 +86,6 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, FloatingBubbleService::class.java)
                 startService(intent)
             } else {
-                // Request permission to draw overlays
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:$packageName")
@@ -97,13 +99,26 @@ class MainActivity : AppCompatActivity() {
             stopService(intent)
         }
 
-        // Start polling RPM and Speed when Start button is clicked
         startButton.setOnClickListener {
             if (!bluetoothHelper.isConnected()) {
                 Toast.makeText(this, "Not connected to OBD-II adapter.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             startPollingData()
+            Toast.makeText(this, "Started polling data.", Toast.LENGTH_SHORT).show()
+        }
+
+        // Stop button: Stop polling
+        stopButton.setOnClickListener {
+            pollingTimer?.cancel()
+            pollingTimer = null
+            Toast.makeText(this, "Stopped polling data.", Toast.LENGTH_SHORT).show()
+        }
+
+        // Disconnect button: Disconnect from device
+        disconnectButton.setOnClickListener {
+            bluetoothHelper.disconnect()
+            Toast.makeText(this, "Disconnected from device.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -155,7 +170,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun parseRPM(response: String): Int? {
-        // "41 0C A B"
         val parts = response.trim().split(" ")
         return if (parts.size >= 4 && parts[0] == "41" && parts[1] == "0C") {
             val A = parts[2].toIntOrNull(16) ?: return null
@@ -165,7 +179,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun parseSpeed(response: String): Int? {
-        // "41 0D A"
         val parts = response.trim().split(" ")
         return if (parts.size >= 3 && parts[0] == "41" && parts[1] == "0D") {
             parts[2].toIntOrNull(16)
