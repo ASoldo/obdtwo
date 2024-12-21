@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
+import android.view.View
 import java.util.Timer
 import java.util.TimerTask
 
@@ -28,12 +29,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var orange_right_progress_bar: ProgressBar
     private lateinit var green_right_progress_bar: ProgressBar
 
-    private lateinit var kmhNumber: EditText
+    private lateinit var rpm_number: TextView
+    private lateinit var startBubbleButton: Button
+    private lateinit var stopBubbleButton: Button
+    private lateinit var scanButton: Button
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
     private lateinit var disconnectButton: Button
 
     private var pollingTimer: Timer? = null
+    private var buttonsVisible = true
 
     companion object {
         private const val REQUEST_OVERLAY_PERMISSION = 100
@@ -50,10 +55,14 @@ class MainActivity : AppCompatActivity() {
         orange_right_progress_bar = findViewById(R.id.orange_right_progress_bar)
         green_right_progress_bar = findViewById(R.id.green_right_progress_bar)
 
-        kmhNumber = findViewById(R.id.kmh_number)
+        rpm_number = findViewById(R.id.rpm_number)
+        // Find buttons
+        startBubbleButton = findViewById(R.id.start_bubble_button)
+        stopBubbleButton = findViewById(R.id.stop_bubble_button)
+        scanButton = findViewById(R.id.scan_button)
+        disconnectButton = findViewById(R.id.disconnect_button)
         startButton = findViewById(R.id.start_button)
         stopButton = findViewById(R.id.stop_button)
-        disconnectButton = findViewById(R.id.disconnect_button)
 
         // Initialize BluetoothHelper
         bluetoothHelper = BluetoothHelper(this)
@@ -127,6 +136,22 @@ class MainActivity : AppCompatActivity() {
             bluetoothHelper.disconnect()
             Toast.makeText(this, "Disconnected from device.", Toast.LENGTH_SHORT).show()
         }
+
+        // Set OnClickListener on rpm_number to toggle buttons visibility
+        rpm_number.setOnClickListener {
+            toggleButtonsVisibility()
+        }
+    }
+
+    private fun toggleButtonsVisibility() {
+        buttonsVisible = !buttonsVisible
+        val visibility = if (buttonsVisible) View.VISIBLE else View.GONE
+        startBubbleButton.visibility = visibility
+        stopBubbleButton.visibility = visibility
+        scanButton.visibility = visibility
+        disconnectButton.visibility = visibility
+        startButton.visibility = visibility
+        stopButton.visibility = visibility
     }
 
     // Register for permission results
@@ -161,25 +186,25 @@ class MainActivity : AppCompatActivity() {
                 val rpmResponse = bluetoothHelper.sendObdCommand("010C")
                 val rpm = parseRPM(rpmResponse)
 
-                val speedResponse = bluetoothHelper.sendObdCommand("010D")
-                val speed = parseSpeed(speedResponse)
-
                 runOnUiThread {
                     // Update main bars here as before
                     updateProgressBars(rpm)
 
-                    speed?.let {
-                        kmhNumber.setText(it.toString())
-                    }
+                    // Convert RPM to a single digit by dividing by 10
+                    // If rpm = null, treat it as 0
+                    val currentRpm = rpm ?: 0
+                    val rpmDigit = currentRpm / 10  // integer division
+                    rpm_number.setText(rpmDigit.toString())
 
-                    // Send broadcast to update bubble service
+                    // Send broadcast to update bubble service as before
                     val intent = Intent("com.example.obdtwo.UPDATE_RPM")
-                    intent.putExtra("rpm", rpm ?: 0)
+                    intent.putExtra("rpm", currentRpm)
                     sendBroadcast(intent)
                 }
             }
-        }, 0, 250) // every 1 second
+        }, 0, 200) // every 250 ms or every 1 second as needed
     }
+
 
 
     private fun updateProgressBars(rpmValue: Int?) {

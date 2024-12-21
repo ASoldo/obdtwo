@@ -3,6 +3,12 @@
     <style name="Base.Theme.Obdtwo" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Set the status bar color -->
+        <item name="android:statusBarColor">@color/status_bar_color_light</item>
+
+        <!-- Optional: Make sure the status bar icons are dark or light based on the background color -->
+        <item name="android:windowLightStatusBar">true</item> <!-- Set to true for dark icons -->
+
     </style>
 
     <style name="Theme.Obdtwo" parent="Base.Theme.Obdtwo" />

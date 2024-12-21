@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -28,15 +27,15 @@
         android:id="@+id/scan_button"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:layout_marginBottom="28dp"
-        android:text="Scan"
-        app:layout_constraintBottom_toTopOf="@+id/disconnect_button"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="@string/scan_button_name" />
 
     <Button
         android:id="@+id/disconnect_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="96dp"
         android:text="Disconnect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -45,9 +44,9 @@
         android:id="@+id/start_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="28dp"
+        android:layout_marginEnd="96dp"
         android:text="Start"
-        app:layout_constraintBottom_toTopOf="@+id/stop_button"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
@@ -58,31 +57,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <EditText
-        android:id="@+id/elm_name"
-        android:layout_width="151dp"
-        android:layout_height="49dp"
-        android:ems="10"
-        android:inputType="text"
-        android:text="Name"
-        app:layout_constraintBottom_toTopOf="@+id/kmh_number"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.519"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <EditText
-        android:id="@+id/kmh_number"
-        android:layout_width="187dp"
-        android:layout_height="47dp"
-        android:ems="10"
-        android:inputType="number"
-        android:text="0"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.566"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <!-- 5 Progress Bars in a horizontal chain -->
     <!-- Adjust their layout_width to 0dp so they share available space -->
     <!-- All use the same vertical constraints and different horizontal chaining -->
@@ -90,7 +64,7 @@
     <ProgressBar
         android:id="@+id/green_left_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:indeterminate="false"
         android:max="30"
@@ -98,65 +72,84 @@
         android:progressDrawable="@drawable/custom_progress_bar"
         app:layout_constraintBottom_toTopOf="@+id/scan_button"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/start_bubble_button" />
+        app:layout_constraintTop_toBottomOf="@+id/start_bubble_button"
+        app:layout_constraintWidth_percent="0.15" />
 
     <ProgressBar
         android:id="@+id/orange_left_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="90dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="8dp"
         android:indeterminate="false"
         android:max="20"
         android:progress="10"
         android:progressDrawable="@drawable/custom_progress_bar"
         android:progressTint="#FF9800"
         app:layout_constraintBottom_toTopOf="@id/scan_button"
-        app:layout_constraintStart_toEndOf="@+id/green_left_progress_bar"
+        app:layout_constraintStart_toEndOf="@id/green_left_progress_bar"
         app:layout_constraintTop_toBottomOf="@id/start_bubble_button"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintWidth_percent="0.20" />
 
     <ProgressBar
         android:id="@+id/red_middle_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="101dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:indeterminate="false"
         android:max="10"
         android:progress="5"
         android:progressDrawable="@drawable/custom_progress_bar"
         android:progressTint="#E91E1E"
+        app:layout_constraintWidth_percent="0.30"
         app:layout_constraintBottom_toTopOf="@id/scan_button"
-        app:layout_constraintEnd_toStartOf="@+id/orange_right_progress_bar"
-        app:layout_constraintStart_toEndOf="@+id/orange_left_progress_bar"
-        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button"
+        app:layout_constraintStart_toEndOf="@id/orange_left_progress_bar" />
 
     <ProgressBar
         android:id="@+id/orange_right_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="90dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:indeterminate="false"
         android:max="20"
         android:progress="10"
         android:progressDrawable="@drawable/custom_progress_bar"
         android:progressTint="#FF9800"
+        app:layout_constraintWidth_percent="0.20"
         app:layout_constraintBottom_toTopOf="@id/scan_button"
-        app:layout_constraintEnd_toStartOf="@+id/green_right_progress_bar"
-        app:layout_constraintStart_toEndOf="@+id/red_middle_progress_bar"
-        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button"
+        app:layout_constraintStart_toEndOf="@id/red_middle_progress_bar" />
 
     <ProgressBar
         android:id="@+id/green_right_progress_bar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:indeterminate="false"
         android:max="30"
         android:progress="15"
         android:progressDrawable="@drawable/custom_progress_bar"
+        app:layout_constraintWidth_percent="0.15"
         app:layout_constraintBottom_toTopOf="@id/scan_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/start_bubble_button" />
+        app:layout_constraintTop_toBottomOf="@id/start_bubble_button"
+        app:layout_constraintStart_toEndOf="@id/orange_right_progress_bar" />
+
+    <TextView
+        android:id="@+id/rpm_number"
+        android:layout_width="197dp"
+        android:layout_height="204dp"
+        android:background="@null"
+        android:fontFamily="sans-serif-black"
+        android:gravity="center"
+        android:text="0"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="#FFFFFF"
+        android:textSize="160dp"
+        app:layout_constraintBottom_toBottomOf="@+id/red_middle_progress_bar"
+        app:layout_constraintEnd_toEndOf="@+id/red_middle_progress_bar"
+        app:layout_constraintStart_toStartOf="@+id/red_middle_progress_bar"
+        app:layout_constraintTop_toTopOf="@+id/red_middle_progress_bar" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

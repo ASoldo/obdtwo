@@ -6,9 +6,11 @@
     android:layout_height="match_parent">
 
     <FrameLayout
-        android:layout_width="51dp"
-        android:layout_height="54dp"
-        android:layout_gravity="center">
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ProgressBar
             android:id="@+id/rpm_progress_bar"
@@ -19,7 +21,9 @@
             android:max="60"
             android:progress="30"
             android:progressDrawable="@drawable/circular_progress_drawable"
-            android:rotation="270" />
+            android:rotation="270"
+            android:scaleX="0.9"
+            android:scaleY="0.9" />
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
